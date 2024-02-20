@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Giao diện điều khiển khóa điện tử</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script
+      type="text/javascript"
+      src="https://code.jquery.com/jquery-3.3.1.min.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+    <script
+      src="https://kit.fontawesome.com/yourcode.js"
+      crossorigin="anonymous"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <style>
+      h3 {
+        padding: 10px;
+        text-shadow: 2px 2px #ffff00;
+        margin-bottom: 5rem;
+      }
+
+      body {
+        background-image: url(../static/background.jpg);
+        background-repeat: no-repeat;
+        background-size: cover;
+        height: 100vh;
+        overflow: hidden;
+      }
+      .container {
+        margin: auto;
+        height: 100%;
+        padding: 1rem;
+      }
+      .table-wrapper {
+        overflow-y: scroll;
+        max-height: 300px;
+        white-space: nowrap;
+      }
+      table {
+        min-width: 30px;
+        border-collapse: collapse;
+        width: 100%;
+        border: 2px solid #4a5789;
+        height: 40%;
+        table-layout: fixed;
+        overflow: scroll;
+      }
+
+      th,
+      td {
+        padding: 2px;
+        text-align: center;
+        border-bottom: 1px solid #4a5789;
+      }
+
+      th {
+        background-color: #4a5789;
+      }
+
+      /* The switch - the box around the slider */
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+      }
+      /* Hide default HTML checkbox */
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      /* The slider */
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        -webkit-transition: 0.4s;
+        transition: 0.4s;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        -webkit-transition: 0.4s;
+        transition: 0.4s;
+      }
+
+      input:checked + .slider {
+        background-color: #2196f3;
+      }
+
+      input:focus + .slider {
+        box-shadow: 0 0 1px #2196f3;
+      }
+
+      input:checked + .slider:before {
+        -webkit-transform: translateX(26px);
+        -ms-transform: translateX(26px);
+        transform: translateX(26px);
+      }
+
+      /* Rounded sliders */
+      .slider.round {
+        border-radius: 34px;
+      }
+
+      .slider.round:before {
+        border-radius: 50%;
+      }
+      .frame {
+        border: 1px solid black;
+        background-color: white;
+        width: 200px;
+        height: 180px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .frame img {
+        max-width: 100%;
+        max-height: 100%;
+      }
+      .lcd-box {
+        background-color: #000; /* Màu nền đen */
+        color: #0f0; /* Màu chữ xanh lá cây */
+        font-size: 20px; /* Kích thước chữ */
+        font-family: "Courier New", Courier, monospace; /* Font chữ */
+        padding: 20px; /* Khoảng cách với viền */
+        border: 2px solid #0f0; /* Viền màu xanh lá cây */
+        box-shadow: 0 0 10px #0f0; /* Đổ bóng */
+        border-radius: 10px; /* Bo tròn góc */
+        text-align: center; /* Canh giữa nội dung */
+      }
+    </style>
+  </head>
+  <!-- Nút đổi mk và đổi mk root -->
+  <body>
+    <div class="container">
+      <h3 class="text-center mb-3">GIAO DIỆN KHÓA ĐIỆN TỬ</h3>
+      <div
+        class="content h-100 d-flex align-items-center justify-content-between"
+      >
+        <div class="row">
+          <div class="col-md-3 d-flex flex-column">
+            <div class="d-flex flex-column">
+              <button
+                type="button"
+                class="btn btn-primary mt-2 w-75 mx-auto"
+                id="ChangePwdBtn"
+              >
+                Đổi MK
+              </button>
+            </div>
+            <div class="frame m-auto">
+              <img
+                id = "myimage"
+                src="{{url_for('static', filename='temp_image.jpg')}}"
+                alt="Người vào gần nhất"
+              />
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-body">
+                <div class="lcd-box" id = "lcdhere">
+                  <p>Bảng thông báo</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-body d-flex">
+                <div class="w-50">
+                  <label class="switch text">
+                    <input type="checkbox" >
+                    <span class="slider round">
+                    
+                    </span>
+                  </input>
+                  </label>
+                  <p class="">Mở khóa</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-5">
+            <div class="table-wrapper">
+              <p>
+                Thời gian
+                <span id="start-time"><span id="end-time"></span> </span>
+              </p>
+              <input
+                type="date"
+                id="end-date"
+                name="end-date"
+                value="2023-07-12"
+                min="2023-01-01"
+                max="2023-12-31"
+              />
+              <table id="table">
+                <thead>
+                  <tr>
+                    <th>HH:MM:SS</th>
+                    <th>YYYY:MM:DD</th>
+                    <th>Tên</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  
+                </tbody>
+              </table>
+              <div class="d-flex justify-content-center">
+                <button
+                  type="button"
+                  class="btn btn-primary mt-2"
+                  id="ButtonUpdate"
+                >
+                  Cập nhật
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="{{url_for('static', filename='javascript1.js')}}"></script>
+  </body>
+</html>

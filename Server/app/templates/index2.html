@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Biểu đồ nhiệt độ và độ ẩm</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js" ></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+	<style>
+		h1  {
+			text-shadow: 2px 2px #ffff00;
+		}
+	</style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="text-center my-3">Biểu đồ nhiệt độ và độ ẩm</h1>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Nhiệt độ</h5>
+                        <canvas id="temperatureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Độ ẩm</h5>
+                        <canvas id="humidityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        var temperatureData = {
+            labels: ['13:12 ', '13:14', '13:15', '13:16', '13:17', '13:18'],
+            datasets: [{
+                label: 'Nhiệt độ',
+                data: [24, 27, 28 , 30, 33, 32.5],
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 2
+            }]
+        };
+        var temperatureOptions = {
+			type:'line',
+			options:{
+				responsive: true
+			},
+            scales: {
+				x:{
+					display: true,
+					title:{
+						display: true,
+						text: 'Thời gian (hh:mm)'
+					}
+				},
+                y: {
+					display: true,
+					title:{
+						display: true,
+						text: 'Nhiệt độ (°C)'
+					},
+					suggestedMin: 0,
+					suggestedMax: 50 
+                },
+            }
+        };
+        var temperatureChart = new Chart(document.getElementById('temperatureChart').getContext('2d'), {
+            type: 'line',
+            data: temperatureData,
+            options: temperatureOptions
+        });
+        var humidityData = {
+            labels: ['13:12 ', '13:14', '13:15', '13:16', '13:17', '13:18'],
+            datasets: [{
+                label: 'Độ ẩm',
+                data: [60, 65, 70, 75, 80, 85],
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 2
+            }]
+        };
+        var humidityOptions = {
+            type:'line',
+			options:{
+				responsive: true
+			},
+            scales: {
+				x:{
+					display: true,
+					title:{
+						display: true,
+						text: 'Thời gian (hh:mm)'
+					}
+				},
+                y: {
+					display: true,
+					title:{
+						display: true,
+						text: 'Độ ẩm (%)'
+					},
+					suggestedMin: 0,
+					suggestedMax: 100 
+                },
+            }
+        };
+        var humidityChart = new Chart(document.getElementById('humidityChart').getContext('2d'), {
+            type: 'line',
+            data: humidityData,
+            options: humidityOptions
+        });
+    </script>
+    <h2></h2>
+	<div class="container">
+		<div class="row justify-content-md-center">
+
+		  <div class="col-md-4">
+			<div class="card" style="background-color: #f2f2f2; border: none;">
+			  <div class="card-body text-center">
+				<h3 class="card-title">Nhiệt độ</h3>
+				<p class="card-text" id="tempdata_id" style="font-size: 2rem;">{{tempdata}}</p>
+			  </div>
+			</div>
+		  </div>
+          
+          <div class="col-md-2">
+          </div>
+
+		  <div class="col-md-4">
+			<div class="card" style="background-color: #f2f2f2; border: none;">
+			  <div class="card-body text-center">
+				<h3 class="card-title">Độ ẩm </h3>
+				<p class="card-text" id="humdata_id" style="font-size: 2rem;">{{humdata}} </p>
+			  </div>
+			</div>
+		  </div>
+
+		</div>
+	</div>
+    
+<script type="text/javascript" charset="utf-8">
+    $(document).ready(function() {
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+    // listen for mqtt_message events
+    // when a new message is received, log data to the page
+        socket.on('mqtt_message', function(data) {
+            if(data.topic == 'topic/temperature'){
+                var tempid = document.getElementById("tempdata_id");
+                tempid.textContent = data.payload.toString()+ "°C";
+                console.log("Nhiet do nhan duoc: ",data.payload);
+            }
+            else if (data.topic == 'topic/humidity'){
+                var humid = document.getElementById("humdata_id");
+                humid.textContent = data.payload.toString() + "%";
+                console.log("Do am nhan duoc: ",data.payload);
+            }
+        })
+    });
+</script>
+
+</body>
+</html>

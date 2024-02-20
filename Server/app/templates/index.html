@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Biểu đồ nhiệt độ và độ ẩm</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js" ></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="text-center my-3" style = "text-shadow: 2px 2px #ffff00;" >Biểu đồ nhiệt độ và độ ẩm</h1>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Nhiệt độ</h5>
+                        <canvas id="temperatureChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Độ ẩm</h5>
+                        <canvas id="humidityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        
+    </script>
+    <h2></h2>
+
+	<div class="container">
+		<div class="row justify-content-md-center">
+
+		  <div class="col-md-4">
+			<div class="card" style="background-color: #f2f2f2;">
+			  <div class="card-body text-center">
+				<h3 class="card-title">Nhiệt độ</h3>
+				<p class="card-text" id="tempdata_id" >{{tempdata}}°C</p>
+			  </div>
+			</div>
+		  </div>
+          
+          <div class="col-md-2">
+          </div>
+
+		  <div class="col-md-4">
+			<div class="card" style="background-color: #f2f2f2;">
+			  <div class="card-body text-center">
+				<h3 class="card-title">Độ ẩm </h3>
+				<p class="card-text" id="humdata_id" >{{humdata}}% </p>
+			  </div>
+			</div>
+		  </div>
+
+		</div>
+	</div>
+    
+    <script type="text/javascript" charset="utf-8">
+        chart_label = []
+        chart_tempdata = []
+        chart_humdata = []
+
+        var socket = io.connect('http://localhost:5000');
+        // listen for mqtt_message events
+        // when a new message is received, log data to the page
+
+        $(document).ready(function() {
+        
+        });
+
+        var temperatureData = {
+            labels: [],
+            datasets: [{
+                label: 'Nhiệt độ',
+                data: [],
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 2
+            }]
+        };
+
+        var temperatureOptions = {
+			type:'line',
+			options:{
+				responsive: true,
+                animations: {
+                    tension: {
+                      duration: 100,
+                      easing: 'linear',
+                      from: 1,
+                      to: 0,
+                      loop: true
+                    }
+                }
+			},
+            scales: {
+				x:{
+					display: true,
+					title:{
+						display: true,
+						text: 'Thời gian (hh:mm)'
+					}
+				},
+                y: {
+					display: true,
+					title:{
+						display: true,
+						text: 'Nhiệt độ (°C)'
+					},
+					suggestedMin: 0,
+					suggestedMax: 50 
+                },
+            }
+        };
+
+        var temperatureChart = new Chart(document.getElementById('temperatureChart').getContext('2d'), {
+            type: 'line',
+            data: temperatureData,
+            options: temperatureOptions
+        });
+
+        var humidityData = {
+            labels: [],
+            datasets: [{
+                label: 'Độ ẩm',
+                data: [],
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 2
+            }]
+        };
+
+        var humidityOptions = {
+            type:'line',
+			options:{
+				responsive: true,
+                animations: {
+                    tension: {
+                      duration: 100,
+                      easing: 'linear',
+                      from: 1,
+                      to: 0,
+                      loop: true
+                    }
+                }
+			},
+            scales: {
+				x:{
+					display: true,
+					title:{
+						display: true,
+						text: 'Thời gian (hh:mm)'
+					}
+				},
+                y: {
+					display: true,
+					title:{
+						display: true,
+						text: 'Độ ẩm (%)'
+					},
+					suggestedMin: 0,
+					suggestedMax: 100 
+                },
+            }
+        };
+        var humidityChart = new Chart(document.getElementById('humidityChart').getContext('2d'), {
+            type: 'line',
+            data: humidityData,
+            options: humidityOptions
+        });
+
+        function UpdateData(chart, label, data) {
+            chart.data.labels.push(label.toString());
+            chart.data.labels.shift();
+            if (chart == temperatureChart){
+                chart.data.datasets[0].data.push(data.toString());
+                chart.data.datasets[0].data.shift();
+            }
+            else {
+                chart.data.datasets[1].data.push(data.toString());
+                chart.data.datasets[1].data.shift();
+            }
+            chart.update('none');
+        }
+        
+        socket.on('chart_getdata',function(data){
+            console.log("chuoi JSON nhan duoc: ",data)
+            myarray = JSON.parse(data)
+            myarray.forEach(function(item){
+                humidityChart.data.labels.push(item.time.toString())
+                temperatureChart.data.labels.push(item.time.toString())
+                temperatureChart.data.datasets[0].data.push(item.temperature.toString())
+                humidityChart.data.datasets[0].data.push(item.humidity.toString())
+            })
+            console.log("chart_label:", chart_label)
+            temperatureChart.update()
+            humidityChart.update()
+        })
+
+        socket.on('mqtt_message_recent', function(data) {
+            console.log("Do am nhan duoc: ",data[0]);
+            console.log("Nhiet do nhan duoc: ",data[1]);
+            console.log("Thoi gian cap nhat:",data[2]);
+            document.getElementById("humdata_id").textContent = data[0] + "%";
+            document.getElementById("tempdata_id").textContent = data[1] + "°C";
+            UpdateData(temperatureChart,data[2],data[1]);
+            UpdateData(humidityChart,data[2],data[0]);
+        })
+        socket.emit('connect_homepage','connected')
+    </script>
+
+</body>
+</html>
